@@ -1,0 +1,162 @@
+@font-face {
+  font-family: 'PixelHackers';
+  src: url('/fonts/PixelHackers.woff2') format('woff2');
+  font-weight: 500;
+  font-display: block;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #fff;
+  font-family: 'PixelHackers', system-ui, sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Page ── */
+
+.page {
+  max-width: 1512px;
+  margin: 0 auto;
+  overflow: clip;
+}
+
+/* ── Hero ── */
+
+.hero {
+  position: relative;
+  margin: 50px 50px 0;
+  height: 829px;
+  background: #000a0f;
+}
+
+#shader-container {
+  position: absolute;
+  inset: 0;
+}
+
+#text-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+#text-reveal canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Character specimen ── */
+
+.chars {
+  margin-top: 242px;
+  text-align: center;
+}
+
+.chars-sample {
+  color: #0000ff;
+  font-size: 72px;
+  font-weight: 500;
+  line-height: 88px;
+  display: inline-block;
+}
+
+/* ── Description boxes ── */
+
+.description {
+  margin-top: 242px;
+  margin-left: 50px;
+  display: flex;
+  gap: 25px;
+}
+
+.desc-left {
+  flex-shrink: 0;
+  width: 815px;
+  height: 617px;
+  outline: 1px solid rgba(0, 0, 255, 0.2);
+  padding: 51px 61px;
+  color: #0000ff;
+  font-size: 72px;
+  font-weight: 500;
+  line-height: 88px;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.desc-right {
+  flex-shrink: 0;
+  width: 569px;
+  height: 617px;
+  background: #0000ff;
+  padding: 40px 37px;
+  color: #fff;
+  font-size: 72px;
+  font-weight: 500;
+  line-height: 88px;
+  overflow: hidden;
+}
+
+[contenteditable] {
+  cursor: text;
+  outline: none;
+  caret-color: currentColor;
+}
+
+/* ── Type specimens ── */
+
+.specimens {
+  width: 1416px;
+  margin: 401px auto 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 39px;
+}
+
+.specimen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.specimen-meta {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(0, 0, 255, 0.2);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 30px;
+}
+
+.specimen-text {
+  color: #0000ff;
+  font-weight: 500;
+  width: 1416px;
+}
+
+.specimen-text.s128 {
+  font-size: 128px;
+  line-height: 154px;
+  letter-spacing: -0.02em;
+}
+
+.specimen-text.s64 {
+  font-size: 64px;
+  line-height: 78px;
+  letter-spacing: -0.02em;
+}
+
+.specimen-text.s24 {
+  font-size: 24px;
+  line-height: 30px;
+  letter-spacing: 0em;
+}

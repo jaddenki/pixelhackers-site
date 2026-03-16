@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Figma__get_metadata",
+      "Bash(python3 -c \"\nimport json\nwith open\\('C:/Users/jadde/.claude.json', 'r'\\) as f:\n    data = json.load\\(f\\)\n\ndata['projects']['C:/Users/jadde/Documents/coding/pixelhackers']['mcpServers'] = {\n    'paper': {\n        'command': 'npx',\n        'args': ['mcp-remote', 'http://127.0.0.1:29979/mcp']\n    }\n}\n\nwith open\\('C:/Users/jadde/.claude.json', 'w'\\) as f:\n    json.dump\\(data, f, indent=2\\)\nprint\\('done'\\)\n\")",
+      "mcp__paper__get_basic_info",
+      "mcp__paper__get_screenshot",
+      "Bash(claude doctor:*)",
+      "mcp__paper__get_tree_summary",
+      "mcp__paper__get_jsx",
+      "Bash(npm create:*)",
+      "Bash(cp:*)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

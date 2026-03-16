@@ -1,0 +1,79 @@
+---
+import '../styles/main.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>PixelHackers</title>
+  </head>
+  <body>
+    <div class="page">
+
+      <!-- Hero: grain gradient background + diffuse text reveal -->
+      <div class="hero">
+        <div id="shader-container"></div>
+        <div id="text-reveal"></div>
+      </div>
+
+      <!-- Character specimen -->
+      <div class="chars">
+        <div class="chars-sample">AaBbCc<br>123#&amp;?<br>()[]{}</div>
+      </div>
+
+      <!-- Description boxes -->
+      <div class="description">
+        <div class="desc-left" contenteditable="plaintext-only" spellcheck="false">Kern lead trace loop drop fill bold flat edge wide snap grid type draw curve hold back clean push render sharp.</div>
+        <div class="desc-right">PixelHackers is a sans-serif pixel typeface with precision and playful character.</div>
+      </div>
+
+      <!-- Type specimens (editable) -->
+      <div class="specimens">
+        <div class="specimen">
+          <div class="specimen-meta">
+            <span>PixelHackers</span>
+            <span>128pt</span>
+            <span>-2% Tracking</span>
+          </div>
+          <div class="specimen-text s128" contenteditable="plaintext-only" spellcheck="false">This is some large text</div>
+        </div>
+
+        <div class="specimen">
+          <div class="specimen-meta">
+            <span>PixelHackers</span>
+            <span>64pt</span>
+            <span>-2% Tracking</span>
+          </div>
+          <div class="specimen-text s64" contenteditable="plaintext-only" spellcheck="false">This is half the size of the other text</div>
+        </div>
+
+        <div class="specimen">
+          <div class="specimen-meta">
+            <span>PixelHackers</span>
+            <span>24pt</span>
+            <span>0% Tracking</span>
+          </div>
+          <div class="specimen-text s24" contenteditable="plaintext-only" spellcheck="false">PixelHackers is a blank pixel font that blank lorem ipsum and I dont really know what else to write in this description</div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      import { CONFIG }            from '../lib/config';
+      import { initGrainShader }   from '../lib/grain-shader';
+      import { initTextReveal }    from '../lib/text-reveal';
+      import { createControlPanel } from '../lib/controls';
+
+      initGrainShader(document.getElementById('shader-container')!);
+
+      initTextReveal(
+        document.querySelector<HTMLElement>('.hero')!,
+        document.getElementById('text-reveal')!,
+      ).then((api) => createControlPanel(CONFIG, api));
+    </script>
+  </body>
+</html>
