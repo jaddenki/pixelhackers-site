@@ -1,6 +1,6 @@
 import { sfx } from './sound';
 import { wetTouched } from './wet-paint';
-import { finePrint } from './fine-print';
+import { finePrint, signature, stamped } from './fine-print';
 
 const LINE = 30;
 const FEED_MS = 55;
@@ -79,6 +79,7 @@ export function initReceipt(button: HTMLAnchorElement, github: HTMLAnchorElement
     const date = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     const order = nextOrder();
+    const sig = signature();
 
     const el = document.createElement('div');
     el.className = 'receipt';
@@ -97,6 +98,9 @@ export function initReceipt(button: HTMLAnchorElement, github: HTMLAnchorElement
       ${row('Your WPM', wpm === null ? 'Untested' : String(wpm))}
       ${row('The world', world ?? 'Unchanged')}
       ${row('Fine print', finePrint())}
+      ${row('Stamped', stamped().length ? stamped().at(-1)! : 'No')}
+      ${rule}
+      ${sig ? `<div class="receipt-sig"><img src="${sig.url}" width="${sig.w}" height="${sig.h}" alt="Your signature"></div>` : row('Signed', 'No')}
       ${rule}
       ${row('Total', 'Free')}
       <a class="receipt-code" href="${github.href}" aria-label="GitHub">${barcode(order + date + time)}</a>

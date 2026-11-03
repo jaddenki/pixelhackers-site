@@ -28,6 +28,28 @@ const HEAL_EVERY = 4;
 const READ_MS = 4000;
 const DEG = Math.PI / 180;
 const PARA = 14;
+const NIB = 4;
+const SIG_W = 0.62;
+const SIG_H = 120;
+const STAMP_WORDS = ['APPROVED', 'VOID', 'PAID', 'RECEIVED', 'WET PAINT'];
+const STAMP_WEAR = 0.14;
+const STAMP_TILT = 7;
+const PRESS_MS = 140;
+const STAMP_ART = [
+  '....####....',
+  '...######...',
+  '...######...',
+  '....####....',
+  '.....##.....',
+  '.....##.....',
+  '.....##.....',
+  '..########..',
+  '.##########.',
+  '############',
+  '############',
+  'kkkkkkkkkkkk',
+];
+const PEN_LEN = 18;
 const HEAD_GAP = 26;
 const HEAD_AFTER = 14;
 
@@ -278,6 +300,7 @@ type Sheet = {
   heat: Float32Array | null;
   img: ImageData | null;
   box: Box | null;
+  sig: Box | null;
 };
 type Puff = { x: number; y: number; vx: number; vy: number; life: number; max: number; s: number; seed: number };
 type Phase = 'idle' | 'gather' | 'burn';
@@ -285,6 +308,50 @@ type Phase = 'idle' | 'gather' | 'burn';
 let ignitions = 0;
 let lensMs = 0;
 export const finePrint = () => (ignitions ? 'Burned' : lensMs > READ_MS ? 'Read' : 'Unread');
+
+type Signature = { url: string; w: number; h: number };
+let signer: (() => Signature | null) | null = null;
+const stamps: string[] = [];
+export const signature = () => signer?.() ?? null;
+export const stamped = () => [...stamps];
+
+type Cell = 'w' | 'k';
+type Sprite = {
+  el: HTMLCanvasElement;
+  cells: Map<string, Cell>;
+  solid: Set<string>;
+  minX: number;
+  minY: number;
+  cols: number;
+  rows: number;
+  hx: number;
+  hy: number;
+  x: number;
+  y: number;
+  moved: boolean;
+  press: number;
+};
+
+const key = (x: number, y: number) => `${x},${y}`;
+
+const penCells = () => {
+  const m = new Map<string, Cell>();
+  for (let t = 0; t <= PEN_LEN; t++) {
+    const offs = t === 0 ? [[0, 0]] : t === 1 ? [[0, 0], [1, 0], [0, -1]] : [[0, 0], [1, 0], [0, -1], [1, -1]];
+    const c: Cell = t <= 1 || t === PEN_LEN - 5 || t === PEN_LEN - 4 ? 'k' : 'w';
+    for (const [dx, dy] of offs) m.set(key(t + dx, -t + dy), c);
+  }
+  return m;
+};
+
+const stampCells = () => {
+  const m = new Map<string, Cell>();
+  STAMP_ART.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch === '#') m.set(key(x, y), 'w');
+    else if (ch === 'k') m.set(key(x, y), 'k');
+  }));
+  return m;
+};
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
@@ -371,7 +438,19 @@ export async function initFinePrint(root: HTMLElement) {
     g.textAlign = 'left';
 
     const space = g.measureText(' ').width;
-    const limit = foot - LINE * 2;
+    let limit = foot - LINE * 2;
+    s.sig = null;
+    if (s.page === 1) {
+      const lineY = foot - LINE * 2 - 6;
+      const lineW = Math.round(width * SIG_W);
+      g.font = `500 ${EM * 2}px PixelHackers`;
+      g.fillText('X', m, lineY - 8);
+      g.fillRect(m, lineY, lineW, 5);
+      g.font = FONT;
+      g.fillText('Signature of the person holding the magnifying glass', m, lineY + 5 + ASCENT + 6);
+      s.sig = { x0: m, y0: lineY - SIG_H, x1: m + lineW, y1: lineY + 5 };
+      limit = lineY - SIG_H - LINE;
+    }
     const fit = (text: string, want: number) => {
       g.font = FONT;
       return clamp(Math.floor(width / g.measureText(text).width), 1, want);
@@ -481,6 +560,167 @@ export async function initFinePrint(root: HTMLElement) {
     s.pctx.putImageData(s.img, 0, 0, x0, y0, x1 - x0, y1 - y0);
   };
 
+  const recolor = (s: Sheet) => {
+    const img = s.pctx.getImageData(0, 0, W, H);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = accent[0];
+      d[i + 1] = accent[1];
+      d[i + 2] = accent[2];
+    }
+    s.pctx.putImageData(img, 0, 0);
+  };
+
+  const inkAt = (s: Sheet, mx: number, my: number, r: number, dirty: Box) => {
+    burnable(s);
+    const x0 = Math.max(0, Math.floor(mx - r / 2)), y0 = Math.max(0, Math.floor(my - r / 2));
+    const x1 = Math.min(W, x0 + r), y1 = Math.min(H, y0 + r);
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) s.ink![y * W + x] = 1;
+    dirty.x0 = Math.min(dirty.x0, x0);
+    dirty.y0 = Math.min(dirty.y0, y0);
+    dirty.x1 = Math.max(dirty.x1, x1);
+    dirty.y1 = Math.max(dirty.y1, y1);
+  };
+
+  const buildSprite = (cells: Map<string, Cell>, hot: [number, number]): Sprite => {
+    const solid = new Set(cells.keys());
+    for (const k of cells.keys()) {
+      const [x, y] = k.split(',').map(Number);
+      for (const [ex, ey] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) solid.add(key(ex, ey));
+    }
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const k of solid) {
+      const [x, y] = k.split(',').map(Number);
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    }
+    const el = document.createElement('canvas');
+    el.className = 'fine-tool';
+    el.setAttribute('aria-hidden', 'true');
+    desk.append(el);
+    return {
+      el, cells, solid, minX, minY,
+      cols: maxX - minX + 1, rows: maxY - minY + 1,
+      hx: (hot[0] - minX + 0.5) * BLOCK, hy: (hot[1] - minY + 0.5) * BLOCK,
+      x: 0, y: 0, moved: false, press: 0,
+    };
+  };
+
+  const paintSprite = (t: Sprite) => {
+    const w = t.cols * BLOCK, h = t.rows * BLOCK;
+    t.el.width = Math.round(w * dpr);
+    t.el.height = Math.round(h * dpr);
+    t.el.style.width = `${w}px`;
+    t.el.style.height = `${h}px`;
+    const c = t.el.getContext('2d')!;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    for (const k of t.solid) {
+      const [x, y] = k.split(',').map(Number);
+      const cell = t.cells.get(k);
+      c.fillStyle = cell === 'w' ? '#fff' : accentCss;
+      c.fillRect((x - t.minX) * BLOCK, (y - t.minY) * BLOCK, BLOCK, BLOCK);
+    }
+  };
+
+  const placeSprite = (t: Sprite) => {
+    t.el.style.transform = `translate(${Math.round(t.x - t.hx)}px, ${Math.round(t.y - t.hy + t.press)}px)`;
+  };
+
+  const hitSprite = (t: Sprite, x: number, y: number) => {
+    const gx = Math.floor((x - (t.x - t.hx)) / BLOCK) + t.minX;
+    const gy = Math.floor((y - (t.y - t.hy)) / BLOCK) + t.minY;
+    return t.solid.has(key(gx, gy));
+  };
+
+  const pen = buildSprite(penCells(), [0, 0]);
+  const stamp = buildSprite(stampCells(), [6, 11]);
+  stamp.hx = (6 - stamp.minX) * BLOCK;
+  stamp.hy = (12 - stamp.minY) * BLOCK;
+  let tool: Sprite | null = null;
+  let lastTip: { x: number; y: number } | null = null;
+  let signed = false;
+  let stampIndex = 0;
+
+  const penStroke = (ax: number, ay: number, bx: number, by: number) => {
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / (bs * 0.75)));
+    const dirty = new Map<Sheet, Box>();
+    for (let i = 0; i <= n; i++) {
+      const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n;
+      const under = topAt(x, y);
+      if (!under) continue;
+      let d = dirty.get(under.s);
+      if (!d) { d = { x0: W, y0: H, x1: 0, y1: 0 }; dirty.set(under.s, d); }
+      inkAt(under.s, under.mx, under.my, NIB, d);
+      const sig = under.s.sig;
+      if (sig && under.mx >= sig.x0 && under.mx < sig.x1 && under.my >= sig.y0 && under.my < sig.y1) signed = true;
+    }
+    for (const [sh, d] of dirty) repaint(sh, d.x0, d.y0, d.x1, d.y1);
+    if (dirty.size) wake();
+  };
+
+  const impression = (word: string) => {
+    const c = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+    const k = 3, pad = 14, border = 8;
+    c.font = `500 ${EM * k}px PixelHackers`;
+    const tw = Math.ceil(c.measureText(word).width);
+    const w = tw + (pad + border) * 2, h = EM * k + (pad + border) * 2;
+    c.canvas.width = w;
+    c.canvas.height = h;
+    c.fillStyle = '#000';
+    c.fillRect(0, 0, w, h);
+    c.clearRect(border, border, w - border * 2, h - border * 2);
+    c.font = `500 ${EM * k}px PixelHackers`;
+    c.textBaseline = 'alphabetic';
+    c.fillText(word, border + pad, border + pad + ASCENT * k);
+    const d = c.getImageData(0, 0, w, h).data;
+    const on = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) on[i] = d[i * 4 + 3] > 127 && Math.random() > STAMP_WEAR ? 1 : 0;
+    return { on, w, h };
+  };
+
+  const pressStamp = () => {
+    const under = topAt(stamp.x, stamp.y);
+    stamp.press = BLOCK;
+    placeSprite(stamp);
+    setTimeout(() => { stamp.press = 0; placeSprite(stamp); }, PRESS_MS);
+    sfx.stamp();
+    if (!under) return;
+    const word = STAMP_WORDS[stampIndex++ % STAMP_WORDS.length];
+    stamps.push(word);
+    const imp = impression(word);
+    const a = (rand(-STAMP_TILT, STAMP_TILT) - under.s.rot) * DEG;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    const R = Math.hypot(imp.w, imp.h) / 2;
+    const dirty: Box = { x0: W, y0: H, x1: 0, y1: 0 };
+    burnable(under.s);
+    const ink = under.s.ink!;
+    for (let y = Math.max(0, Math.floor(under.my - R)); y < Math.min(H, Math.ceil(under.my + R)); y++) {
+      for (let x = Math.max(0, Math.floor(under.mx - R)); x < Math.min(W, Math.ceil(under.mx + R)); x++) {
+        const dx = x + 0.5 - under.mx, dy = y + 0.5 - under.my;
+        const u = Math.floor(dx * cos + dy * sin + imp.w / 2);
+        const v = Math.floor(-dx * sin + dy * cos + imp.h / 2);
+        if (u < 0 || v < 0 || u >= imp.w || v >= imp.h || !imp.on[v * imp.w + u]) continue;
+        ink[y * W + x] = 1;
+        dirty.x0 = Math.min(dirty.x0, x); dirty.y0 = Math.min(dirty.y0, y);
+        dirty.x1 = Math.max(dirty.x1, x + 1); dirty.y1 = Math.max(dirty.y1, y + 1);
+      }
+    }
+    repaint(under.s, dirty.x0, dirty.y0, dirty.x1, dirty.y1);
+    wake();
+  };
+
+  signer = () => {
+    const main = sheets.find((x) => x.page === 1);
+    if (!signed || !main?.sig) return null;
+    const b = main.sig;
+    const c = document.createElement('canvas');
+    c.width = b.x1 - b.x0;
+    c.height = b.y1 - b.y0;
+    c.getContext('2d')!.drawImage(main.paper, b.x0, b.y0, c.width, c.height, 0, 0, c.width, c.height);
+    return { url: c.toDataURL(), w: c.width, h: c.height };
+  };
+
   const buildLens = () => {
     lensR = clamp(Math.floor((pw * 0.4) / BLOCK) * BLOCK, 72, 132);
     C = lensR + RIM + BLOCK;
@@ -560,11 +800,12 @@ export async function initFinePrint(root: HTMLElement) {
     W = Math.floor(pw / BASE);
     H = Math.floor(ph / BASE);
     bs = pw / W;
-    deskH = Math.round(ph * (wide ? 1.6 : 1.5));
+    deskH = Math.round(ph * (wide ? 2 : 1.9));
     desk.style.height = `${deskH}px`;
     readAccent();
 
     clearTimeout(typesetTimer);
+    signed = false;
     sheets.forEach((s) => s.el.remove());
     sheets = [];
     const r = rng(SEED);
@@ -598,7 +839,7 @@ export async function initFinePrint(root: HTMLElement) {
         title: doc.title,
         blocks: doc.blocks,
         page: isMain ? 1 : other + 2,
-        ink: null, heat: null, img: null, box: null,
+        ink: null, heat: null, img: null, box: null, sig: null,
       });
       if (!isMain) other++;
     }
@@ -625,6 +866,15 @@ export async function initFinePrint(root: HTMLElement) {
     lx = clamp(lx, 0, deskW);
     ly = clamp(ly, 0, deskH);
     placeLens();
+
+    for (const t of [pen, stamp]) paintSprite(t);
+    if (!pen.moved) { pen.x = deskW * (wide ? 0.16 : 0.12); pen.y = deskH * 0.9; }
+    if (!stamp.moved) { stamp.x = deskW * (wide ? 0.6 : 0.5); stamp.y = deskH * 0.94; }
+    for (const t of [pen, stamp]) {
+      t.x = clamp(t.x, t.hx, deskW - (t.cols * BLOCK - t.hx));
+      t.y = clamp(t.y, t.hy, deskH - (t.rows * BLOCK - t.hy));
+      placeSprite(t);
+    }
     draw();
   };
 
@@ -864,7 +1114,7 @@ export async function initFinePrint(root: HTMLElement) {
     });
   };
 
-  const busy = () => dragging || held !== null || phase !== 'idle' || smoke.length > 0 || sheets.some((s) => s.box);
+  const busy = () => dragging || held !== null || tool !== null || phase !== 'idle' || smoke.length > 0 || sheets.some((s) => s.box);
 
   const loop = (now: number) => {
     raf = 0;
@@ -886,9 +1136,17 @@ export async function initFinePrint(root: HTMLElement) {
     if (!raf && visible) raf = requestAnimationFrame(loop);
   };
 
+  const toolAt = (x: number, y: number) => [pen, stamp].find((t) => hitSprite(t, x, y)) ?? null;
+
   desk.addEventListener('pointerdown', (e) => {
     const p = local(e);
-    if (hit(p.x, p.y)) {
+    const t = toolAt(p.x, p.y);
+    if (t) {
+      tool = t;
+      t.moved = true;
+      grab = { x: p.x - t.x, y: p.y - t.y };
+      lastTip = t === pen ? { x: t.x, y: t.y } : null;
+    } else if (hit(p.x, p.y)) {
       dragging = true;
       moved = true;
       grab = { x: p.x - lx, y: p.y - ly };
@@ -913,7 +1171,15 @@ export async function initFinePrint(root: HTMLElement) {
 
   desk.addEventListener('pointermove', (e) => {
     const p = local(e);
-    if (dragging) {
+    if (tool) {
+      tool.x = clamp(p.x - grab.x, 0, deskW);
+      tool.y = clamp(p.y - grab.y, 0, deskH);
+      placeSprite(tool);
+      if (tool === pen && lastTip) {
+        penStroke(lastTip.x, lastTip.y, pen.x, pen.y);
+        lastTip = { x: pen.x, y: pen.y };
+      }
+    } else if (dragging) {
       moveTo(p.x - grab.x, p.y - grab.y);
     } else if (held) {
       held.x = clamp(p.x - grab.x, -pw / 2, deskW - pw / 2);
@@ -922,17 +1188,20 @@ export async function initFinePrint(root: HTMLElement) {
       held.el.style.top = `${held.y}px`;
       wake();
     } else {
-      desk.classList.toggle('is-lens', hit(p.x, p.y));
+      desk.classList.toggle('is-lens', !!toolAt(p.x, p.y) || hit(p.x, p.y));
     }
   });
 
   const drop = () => {
-    if (!dragging && !held) return;
+    if (!dragging && !held && !tool) return;
+    if (tool === stamp) pressStamp();
+    else sfx.click();
     dragging = false;
     held = null;
+    tool = null;
+    lastTip = null;
     phase = 'idle';
     desk.classList.remove('is-holding');
-    sfx.click();
   };
   desk.addEventListener('pointerup', drop);
   desk.addEventListener('pointercancel', drop);
@@ -953,8 +1222,9 @@ export async function initFinePrint(root: HTMLElement) {
     readAccent();
     for (const s of sheets) {
       if (s.img) repaint(s, 0, 0, W, H);
-      else typeset(s);
+      else recolor(s);
     }
+    for (const t of [pen, stamp]) paintSprite(t);
     draw();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-accent'] });
 

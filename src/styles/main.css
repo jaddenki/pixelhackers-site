@@ -791,7 +791,7 @@ body {
 
 .fine {
   margin-top: calc(242 * var(--u));
-  padding: max(64px, calc(140 * var(--u))) 0;
+  padding: max(96px, calc(200 * var(--u))) 0;
   background: var(--accent);
   color: var(--accent);
   overflow: clip;
@@ -815,6 +815,14 @@ body {
   top: 0;
   left: 0;
   z-index: 10000;
+  pointer-events: none;
+}
+
+.fine-tool {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10001;
   pointer-events: none;
 }
 
@@ -912,6 +920,12 @@ html.is-pressing .fine-desk.is-holding * {
   height: 6px;
   margin: 12px 0;
   background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 12px);
+}
+
+.receipt-sig img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .receipt-code {
