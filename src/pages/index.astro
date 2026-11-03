@@ -9,14 +9,19 @@ import '../styles/main.css';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <title>PixelHackers</title>
+    <script is:inline>
+      try { if (localStorage.getItem('ph-accent') === 'pink') document.documentElement.dataset.accent = 'pink'; } catch {}
+    </script>
   </head>
   <body>
     <div class="page">
 
-      <!-- Hero: grain gradient background + diffuse text reveal -->
       <div class="hero">
-        <div id="shader-container"></div>
-        <div id="text-reveal"></div>
+        <canvas class="hero-gliders" aria-hidden="true"></canvas>
+        <div class="hero-text">
+          <div class="hero-line">Pixel</div>
+          <div class="hero-line">Hackers</div>
+        </div>
       </div>
 
       <!-- Character specimen -->
@@ -27,7 +32,7 @@ import '../styles/main.css';
       <!-- Description boxes -->
       <div class="description">
         <div class="desc-left" contenteditable="plaintext-only" spellcheck="false">Kern lead trace loop drop fill bold flat edge wide snap grid type draw curve hold back clean push render sharp.</div>
-        <div class="desc-right">PixelHackers is a sans-serif pixel typeface with precision and playful character.</div>
+        <div class="desc-right">PixelHackers is a sans-serif pixel typeface with details idk what to say now.</div>
       </div>
 
       <!-- Type specimens (editable) -->
@@ -35,8 +40,8 @@ import '../styles/main.css';
         <div class="specimen">
           <div class="specimen-meta">
             <span>PixelHackers</span>
-            <span>128pt</span>
-            <span>-2% Tracking</span>
+            <span class="stepper" data-prop="size" data-value="128"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">128pt</span><button type="button" aria-label="Increase">+</button></span>
+            <span class="stepper" data-prop="tracking" data-value="-2"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">-2% Tracking</span><button type="button" aria-label="Increase">+</button></span>
           </div>
           <div class="specimen-text s128" contenteditable="plaintext-only" spellcheck="false">This is some large text</div>
         </div>
@@ -44,8 +49,8 @@ import '../styles/main.css';
         <div class="specimen">
           <div class="specimen-meta">
             <span>PixelHackers</span>
-            <span>64pt</span>
-            <span>-2% Tracking</span>
+            <span class="stepper" data-prop="size" data-value="64"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">64pt</span><button type="button" aria-label="Increase">+</button></span>
+            <span class="stepper" data-prop="tracking" data-value="-2"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">-2% Tracking</span><button type="button" aria-label="Increase">+</button></span>
           </div>
           <div class="specimen-text s64" contenteditable="plaintext-only" spellcheck="false">This is half the size of the other text</div>
         </div>
@@ -53,27 +58,70 @@ import '../styles/main.css';
         <div class="specimen">
           <div class="specimen-meta">
             <span>PixelHackers</span>
-            <span>24pt</span>
-            <span>0% Tracking</span>
+            <span class="stepper" data-prop="size" data-value="24"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">24pt</span><button type="button" aria-label="Increase">+</button></span>
+            <span class="stepper" data-prop="tracking" data-value="0"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">0% Tracking</span><button type="button" aria-label="Increase">+</button></span>
           </div>
           <div class="specimen-text s24" contenteditable="plaintext-only" spellcheck="false">PixelHackers is a blank pixel font that blank lorem ipsum and I dont really know what else to write in this description</div>
         </div>
       </div>
 
+
+      <div class="wpm">
+        <div class="specimen-meta">
+          <span>What is your WPM?!</span>
+          <span class="wpm-options">
+            <span class="wpm-durations" role="group" aria-label="Test length in seconds">
+              <button type="button" data-duration="15">15s</button>
+              <button type="button" data-duration="30" class="is-active">30s</button>
+              <button type="button" data-duration="60">60s</button>
+            </span>
+            <span class="wpm-durations" role="group" aria-label="View">
+              <button type="button" data-mode="big" class="is-active">Big</button>
+              <button type="button" data-mode="classic">Classic</button>
+            </span>
+          </span>
+          <span class="wpm-timer" aria-label="Seconds left">30s</span>
+        </div>
+        <div class="wpm-box">
+          <input class="wpm-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Type the words shown">
+          <button class="wpm-start" type="button">Click to start</button>
+          <div class="wpm-window">
+            <div class="wpm-text"></div>
+            <div class="wpm-next" aria-hidden="true"></div>
+            <div class="wpm-lines"><div class="wpm-flow"></div></div>
+          </div>
+          <div class="wpm-space"><span class="wpm-key">Space</span> for next word</div>
+          <div class="wpm-result" aria-live="polite"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cta">
+      <a class="cta-btn cta-primary" href="/fonts/PixelHackers.woff2" download>Download</a>
+      <a class="cta-btn" href="#">GitHub</a>
     </div>
 
     <script>
-      import { CONFIG }            from '../lib/config';
-      import { initGrainShader }   from '../lib/grain-shader';
-      import { initTextReveal }    from '../lib/text-reveal';
-      import { createControlPanel } from '../lib/controls';
+      import { initSound }            from '../lib/sound';
+      import { initAccent }           from '../lib/accent';
+      import { initCursorPress }      from '../lib/cursor-press';
+      import { initHeroType }         from '../lib/hero-type';
+      import { initHeroGliders }      from '../lib/hero-gliders';
+      import { initSpecimenControls } from '../lib/specimen-controls';
+      import { initTypePixelate }     from '../lib/type-pixelate';
+      import { initTypingTest }       from '../lib/typing-test';
 
-      initGrainShader(document.getElementById('shader-container')!);
+      const hero = document.querySelector<HTMLElement>('.hero')!;
 
-      initTextReveal(
-        document.querySelector<HTMLElement>('.hero')!,
-        document.getElementById('text-reveal')!,
-      ).then((api) => createControlPanel(CONFIG, api));
+      initSound();
+      initAccent();
+      initCursorPress();
+      initHeroType(hero);
+      initHeroGliders(hero, hero.querySelector<HTMLCanvasElement>('.hero-gliders')!);
+      initSpecimenControls();
+      initTypePixelate();
+      initTypingTest(document.querySelector<HTMLElement>('.wpm')!);
     </script>
   </body>
 </html>
