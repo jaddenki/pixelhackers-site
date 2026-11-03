@@ -1,4 +1,4 @@
-import { sfx } from './sound';
+import { sfx, scribble, stopScribble } from './sound';
 
 const EM = 20;
 const ASCENT = 16;
@@ -51,6 +51,8 @@ const STAMP_ART = [
 ];
 const PEN_LEN = 18;
 const TOOL_SCALE = 2;
+const SCRATCH_SPEED = 700;
+const SCRATCH_QUIET_MS = 70;
 const HEAD_GAP = 26;
 const HEAD_AFTER = 14;
 
@@ -321,6 +323,7 @@ type Sprite = {
   el: HTMLCanvasElement;
   cells: Map<string, Cell>;
   solid: Set<string>;
+  halo: Set<string>;
   minX: number;
   minY: number;
   cols: number;
@@ -598,17 +601,26 @@ export async function initFinePrint(root: HTMLElement) {
     el.setAttribute('aria-hidden', 'true');
     desk.append(el);
     return {
-      el, cells: new Map(), solid: new Set(), minX: 0, minY: 0,
+      el, cells: new Map(), solid: new Set(), halo: new Set(), minX: 0, minY: 0,
       cols: 0, rows: 0, hx: 0, hy: 0, x: 0, y: 0, moved: false, press: 0,
     };
   };
 
   const shape = (t: Sprite, cells: Map<string, Cell>, hot: [number, number]) => {
+    const around = (from: Iterable<string>, into: Set<string>, skip: Set<string>) => {
+      for (const k of from) {
+        const [x, y] = k.split(',').map(Number);
+        for (const [ex, ey] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+          const e = key(ex, ey);
+          if (!skip.has(e)) into.add(e);
+        }
+      }
+    };
     const solid = new Set(cells.keys());
-    for (const k of cells.keys()) {
-      const [x, y] = k.split(',').map(Number);
-      for (const [ex, ey] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) solid.add(key(ex, ey));
-    }
+    around(cells.keys(), solid, solid);
+    const halo = new Set<string>();
+    around([...solid], halo, solid);
+    for (const k of halo) solid.add(k);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const k of solid) {
       const [x, y] = k.split(',').map(Number);
@@ -616,7 +628,7 @@ export async function initFinePrint(root: HTMLElement) {
       maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
     }
     Object.assign(t, {
-      cells, solid, minX, minY,
+      cells, solid, halo, minX, minY,
       cols: maxX - minX + 1, rows: maxY - minY + 1,
       hx: (hot[0] - minX) * BLOCK, hy: (hot[1] - minY) * BLOCK,
     });
@@ -634,7 +646,7 @@ export async function initFinePrint(root: HTMLElement) {
     for (const k of t.solid) {
       const [x, y] = k.split(',').map(Number);
       const cell = t.cells.get(k);
-      c.fillStyle = cell === 'w' ? '#fff' : accentCss;
+      c.fillStyle = cell === 'w' || t.halo.has(k) ? '#fff' : accentCss;
       c.fillRect((x - t.minX) * BLOCK, (y - t.minY) * BLOCK, BLOCK, BLOCK);
     }
   };
@@ -671,6 +683,18 @@ export async function initFinePrint(root: HTMLElement) {
     }
     for (const [sh, d] of dirty) repaint(sh, d.x0, d.y0, d.x1, d.y1);
     if (dirty.size) wake();
+    return dirty.size > 0;
+  };
+
+  let quiet = 0;
+  let tipT = 0;
+  const scratchFor = (dist: number, inked: boolean) => {
+    const now = performance.now();
+    const speed = (dist / Math.max(1, now - tipT)) * 1000;
+    tipT = now;
+    scribble(inked ? Math.max(0.2, speed / SCRATCH_SPEED) : 0);
+    clearTimeout(quiet);
+    quiet = window.setTimeout(() => scribble(0), SCRATCH_QUIET_MS);
   };
 
   const impression = (word: string) => {
@@ -1163,6 +1187,7 @@ export async function initFinePrint(root: HTMLElement) {
       t.moved = true;
       grab = { x: p.x - t.x, y: p.y - t.y };
       lastTip = t === pen ? { x: t.x, y: t.y } : null;
+      tipT = performance.now();
     } else if (hit(p.x, p.y)) {
       dragging = true;
       moved = true;
@@ -1193,7 +1218,8 @@ export async function initFinePrint(root: HTMLElement) {
       tool.y = clamp(p.y - grab.y, 0, deskH);
       placeSprite(tool);
       if (tool === pen && lastTip) {
-        penStroke(lastTip.x, lastTip.y, pen.x, pen.y);
+        const inked = penStroke(lastTip.x, lastTip.y, pen.x, pen.y);
+        scratchFor(Math.hypot(pen.x - lastTip.x, pen.y - lastTip.y), inked);
         lastTip = { x: pen.x, y: pen.y };
       }
     } else if (dragging) {
@@ -1213,6 +1239,7 @@ export async function initFinePrint(root: HTMLElement) {
     if (!dragging && !held && !tool) return;
     if (tool === stamp) pressStamp();
     else sfx.click();
+    if (tool === pen) { clearTimeout(quiet); stopScribble(); }
     dragging = false;
     held = null;
     tool = null;

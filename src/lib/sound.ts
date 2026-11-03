@@ -151,6 +151,46 @@ export const sfx = {
   cheer: () => play(CHEERS[Math.floor(Math.random() * CHEERS.length)], { volume: 0.9 }),
 };
 
+type Scratch = { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode };
+let scratch: Scratch | null = null;
+
+function startScratch(ac: AudioContext): Scratch {
+  const buffer = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+  const d = buffer.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+  const filter = ac.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.Q.value = 0.9;
+  filter.frequency.value = 2200;
+  const gain = ac.createGain();
+  gain.gain.value = 0;
+  src.connect(filter).connect(gain).connect(ac.destination);
+  src.start();
+  return { src, gain, filter };
+}
+
+export function scribble(level: number) {
+  if (!prefs.enabled) return stopScribble();
+  if (level <= 0 && !scratch) return;
+  const ac = audio();
+  scratch ??= startScratch(ac);
+  const t = ac.currentTime;
+  const v = Math.min(1, Math.max(0, level)) * (0.7 + Math.random() * 0.3);
+  scratch.gain.gain.setTargetAtTime(v * 0.18, t, 0.015);
+  scratch.filter.frequency.setTargetAtTime(1600 + v * 2600, t, 0.03);
+}
+
+export function stopScribble() {
+  if (!scratch || !ctx) return;
+  const s = scratch;
+  scratch = null;
+  s.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+  s.src.stop(ctx.currentTime + 0.15);
+}
+
 const icon = (d: string) =>
   `<svg viewBox="0 0 12 10" width="36" height="30" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="${d}"/></svg>`;
 
@@ -191,7 +231,7 @@ export function initSound() {
 
   const update = (patch: Partial<Prefs>) => {
     prefs = { ...prefs, ...patch };
-    if (!prefs.enabled) stopEffects();
+    if (!prefs.enabled) { stopEffects(); stopScribble(); }
     save();
     render();
     syncMusic();
