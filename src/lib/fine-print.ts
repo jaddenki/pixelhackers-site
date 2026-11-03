@@ -50,6 +50,8 @@ const STAMP_ART = [
   'kkkkkkkkkkkk',
 ];
 const PEN_LEN = 18;
+const PEN_REST_LEN = 26;
+const PEN_HOLD = 0.35;
 const PEN_SCALE = [1, 2];
 const STAMP_SCALE = [2, 3];
 const SCRATCH_SPEED = 700;
@@ -346,6 +348,17 @@ const penCells = () => {
     const c: Cell = t <= 1 || t === PEN_LEN - 5 || t === PEN_LEN - 4 ? 'k' : 'w';
     for (const [dx, dy] of offs) m.set(key(t + dx, -t + dy), c);
   }
+  return m;
+};
+
+const penRestCells = () => {
+  const m = new Map<string, Cell>();
+  for (let t = 0; t <= PEN_REST_LEN; t++) {
+    const ys = t === 0 ? [0] : [-1, 0, 1];
+    const c: Cell = t <= 1 || t === PEN_REST_LEN - 7 || t === PEN_REST_LEN - 6 ? 'k' : 'w';
+    for (const y of ys) m.set(key(t, y), c);
+  }
+  for (let t = PEN_REST_LEN - 5; t < PEN_REST_LEN - 1; t++) m.set(key(t, -2), 'w');
   return m;
 };
 
@@ -663,6 +676,16 @@ export async function initFinePrint(root: HTMLElement) {
   };
 
   const pen = buildSprite();
+  let penK = 1;
+  const setPen = (writing: boolean) => {
+    shape(pen, scaleCells(writing ? penCells() : penRestCells(), penK), [penK / 2, penK / 2]);
+    paintSprite(pen);
+    if (!writing) {
+      pen.x = clamp(pen.x, pen.hx, deskW - (pen.cols * BLOCK - pen.hx));
+      pen.y = clamp(pen.y, pen.hy, deskH - (pen.rows * BLOCK - pen.hy));
+    }
+    placeSprite(pen);
+  };
   const stamp = buildSprite();
   let tool: Sprite | null = null;
   let lastTip: { x: number; y: number } | null = null;
@@ -907,7 +930,8 @@ export async function initFinePrint(root: HTMLElement) {
     placeLens();
 
     const pk = PEN_SCALE[wide ? 1 : 0], sk = STAMP_SCALE[wide ? 1 : 0];
-    shape(pen, scaleCells(penCells(), pk), [pk / 2, pk / 2]);
+    penK = pk;
+    shape(pen, scaleCells(tool === pen ? penCells() : penRestCells(), pk), [pk / 2, pk / 2]);
     shape(stamp, scaleCells(stampCells(), sk), [6 * sk, 12 * sk]);
     for (const t of [pen, stamp]) paintSprite(t);
     if (!pen.moved) { pen.x = deskW * (wide ? 0.16 : 0.12); pen.y = deskH * 0.9; }
@@ -1187,6 +1211,14 @@ export async function initFinePrint(root: HTMLElement) {
       tool = t;
       t.moved = true;
       grab = { x: p.x - t.x, y: p.y - t.y };
+      if (t === pen) {
+        setPen(true);
+        const d = PEN_LEN * PEN_HOLD * penK * BLOCK;
+        grab = { x: d, y: -d };
+        pen.x = clamp(p.x - grab.x, 0, deskW);
+        pen.y = clamp(p.y - grab.y, 0, deskH);
+        placeSprite(pen);
+      }
       lastTip = t === pen ? { x: t.x, y: t.y } : null;
       tipT = performance.now();
     } else if (hit(p.x, p.y)) {
@@ -1240,7 +1272,12 @@ export async function initFinePrint(root: HTMLElement) {
     if (!dragging && !held && !tool) return;
     if (tool === stamp) pressStamp();
     else sfx.click();
-    if (tool === pen) { clearTimeout(quiet); stopScribble(); }
+    if (tool === pen) {
+      clearTimeout(quiet);
+      stopScribble();
+      tool = null;
+      setPen(false);
+    }
     dragging = false;
     held = null;
     tool = null;
