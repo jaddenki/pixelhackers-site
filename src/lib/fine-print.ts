@@ -50,6 +50,7 @@ const STAMP_ART = [
   'kkkkkkkkkkkk',
 ];
 const PEN_LEN = 18;
+const TOOL_SCALE = 2;
 const HEAD_GAP = 26;
 const HEAD_AFTER = 14;
 
@@ -344,6 +345,15 @@ const penCells = () => {
   return m;
 };
 
+const scaleCells = (cells: Map<string, Cell>, k: number) => {
+  const out = new Map<string, Cell>();
+  for (const [at, c] of cells) {
+    const [x, y] = at.split(',').map(Number);
+    for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) out.set(key(x * k + i, y * k + j), c);
+  }
+  return out;
+};
+
 const stampCells = () => {
   const m = new Map<string, Cell>();
   STAMP_ART.forEach((row, y) => [...row].forEach((ch, x) => {
@@ -582,7 +592,18 @@ export async function initFinePrint(root: HTMLElement) {
     dirty.y1 = Math.max(dirty.y1, y1);
   };
 
-  const buildSprite = (cells: Map<string, Cell>, hot: [number, number]): Sprite => {
+  const buildSprite = (): Sprite => {
+    const el = document.createElement('canvas');
+    el.className = 'fine-tool';
+    el.setAttribute('aria-hidden', 'true');
+    desk.append(el);
+    return {
+      el, cells: new Map(), solid: new Set(), minX: 0, minY: 0,
+      cols: 0, rows: 0, hx: 0, hy: 0, x: 0, y: 0, moved: false, press: 0,
+    };
+  };
+
+  const shape = (t: Sprite, cells: Map<string, Cell>, hot: [number, number]) => {
     const solid = new Set(cells.keys());
     for (const k of cells.keys()) {
       const [x, y] = k.split(',').map(Number);
@@ -594,16 +615,11 @@ export async function initFinePrint(root: HTMLElement) {
       minX = Math.min(minX, x); minY = Math.min(minY, y);
       maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
     }
-    const el = document.createElement('canvas');
-    el.className = 'fine-tool';
-    el.setAttribute('aria-hidden', 'true');
-    desk.append(el);
-    return {
-      el, cells, solid, minX, minY,
+    Object.assign(t, {
+      cells, solid, minX, minY,
       cols: maxX - minX + 1, rows: maxY - minY + 1,
-      hx: (hot[0] - minX + 0.5) * BLOCK, hy: (hot[1] - minY + 0.5) * BLOCK,
-      x: 0, y: 0, moved: false, press: 0,
-    };
+      hx: (hot[0] - minX) * BLOCK, hy: (hot[1] - minY) * BLOCK,
+    });
   };
 
   const paintSprite = (t: Sprite) => {
@@ -633,10 +649,8 @@ export async function initFinePrint(root: HTMLElement) {
     return t.solid.has(key(gx, gy));
   };
 
-  const pen = buildSprite(penCells(), [0, 0]);
-  const stamp = buildSprite(stampCells(), [6, 11]);
-  stamp.hx = (6 - stamp.minX) * BLOCK;
-  stamp.hy = (12 - stamp.minY) * BLOCK;
+  const pen = buildSprite();
+  const stamp = buildSprite();
   let tool: Sprite | null = null;
   let lastTip: { x: number; y: number } | null = null;
   let signed = false;
@@ -867,6 +881,9 @@ export async function initFinePrint(root: HTMLElement) {
     ly = clamp(ly, 0, deskH);
     placeLens();
 
+    const k = wide ? TOOL_SCALE : 1;
+    shape(pen, scaleCells(penCells(), k), [k / 2, k / 2]);
+    shape(stamp, scaleCells(stampCells(), k), [6 * k, 12 * k]);
     for (const t of [pen, stamp]) paintSprite(t);
     if (!pen.moved) { pen.x = deskW * (wide ? 0.16 : 0.12); pen.y = deskH * 0.9; }
     if (!stamp.moved) { stamp.x = deskW * (wide ? 0.6 : 0.5); stamp.y = deskH * 0.94; }
