@@ -10,6 +10,7 @@ const FILES = {
   testMusic: '/audio/lingon.mp3',
   globeMusic: '/audio/allen.mp3',
   token: '/audio/token.mp3',
+  stamp: '/audio/stamp.mp3',
   talk: '/audio/talk.mp3',
   ready: '/audio/ready.mp3',
   credits: '/audio/goodending.mp3',
@@ -140,7 +141,7 @@ const pitch = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
 export const sfx = {
   key: () => play('key', { volume: 0.5, rate: pitch(0.75, 1.35) }),
   click: () => play('key', { volume: 0.7, rate: pitch(0.85, 1.2) }),
-  stamp: () => play('boom', { volume: 0.3, rate: pitch(1.9, 2.3) }),
+  stamp: () => play('stamp', { volume: 0.9, rate: pitch(0.95, 1.05) }),
   crackle: () => play('key', { volume: 0.35, rate: pitch(0.4, 0.7) }),
   talk: () => play('talk', { volume: 0.6, rate: pitch(0.95, 1.1) }),
   heart: () => play('token', { volume: 0.7, rate: pitch(0.9, 1.15) }),
