@@ -50,7 +50,8 @@ const STAMP_ART = [
   'kkkkkkkkkkkk',
 ];
 const PEN_LEN = 18;
-const TOOL_SCALE = 2;
+const PEN_SCALE = [1, 2];
+const STAMP_SCALE = [2, 3];
 const SCRATCH_SPEED = 700;
 const SCRATCH_QUIET_MS = 70;
 const HEAD_GAP = 26;
@@ -905,9 +906,9 @@ export async function initFinePrint(root: HTMLElement) {
     ly = clamp(ly, 0, deskH);
     placeLens();
 
-    const k = wide ? TOOL_SCALE : 1;
-    shape(pen, scaleCells(penCells(), k), [k / 2, k / 2]);
-    shape(stamp, scaleCells(stampCells(), k), [6 * k, 12 * k]);
+    const pk = PEN_SCALE[wide ? 1 : 0], sk = STAMP_SCALE[wide ? 1 : 0];
+    shape(pen, scaleCells(penCells(), pk), [pk / 2, pk / 2]);
+    shape(stamp, scaleCells(stampCells(), sk), [6 * sk, 12 * sk]);
     for (const t of [pen, stamp]) paintSprite(t);
     if (!pen.moved) { pen.x = deskW * (wide ? 0.16 : 0.12); pen.y = deskH * 0.9; }
     if (!stamp.moved) { stamp.x = deskW * (wide ? 0.6 : 0.5); stamp.y = deskH * 0.94; }
