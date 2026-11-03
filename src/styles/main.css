@@ -5,6 +5,24 @@
   font-display: block;
 }
 
+:root {
+  --accent: #0000ff;
+  --cur-hand: url('/cursors/hand.svg');
+  --cur-hand-press: url('/cursors/hand-press.svg');
+  --cur-hand-alt: url('/cursors/hand-alt.svg');
+  --cur-hand-alt-press: url('/cursors/hand-alt-press.svg');
+  --cur-ibeam: url('/cursors/ibeam.svg');
+}
+
+:root[data-accent="pink"] {
+  --accent: #FF4C9C;
+  --cur-hand: url('/cursors/pink/hand.svg');
+  --cur-hand-press: url('/cursors/pink/hand-press.svg');
+  --cur-hand-alt: url('/cursors/pink/hand-alt.svg');
+  --cur-hand-alt-press: url('/cursors/pink/hand-alt-press.svg');
+  --cur-ibeam: url('/cursors/pink/ibeam.svg');
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -12,21 +30,21 @@
 }
 
 html {
-  cursor: url('/cursors/hand.svg') 30 6, auto;
+  cursor: var(--cur-hand) 30 6, auto;
 }
 
 html.is-pressing,
 html.is-pressing * {
-  cursor: url('/cursors/hand-press.svg') 30 6, pointer !important;
+  cursor: var(--cur-hand-press) 30 6, pointer !important;
 }
 
 a, button, .hero, .wpm-box.is-done {
-  cursor: url('/cursors/hand-alt.svg') 30 6, pointer;
+  cursor: var(--cur-hand-alt) 30 6, pointer;
 }
 
 html.is-pressing :is(a, button, .hero, .wpm-box.is-done),
 html.is-pressing :is(a, button, .hero, .wpm-box.is-done) * {
-  cursor: url('/cursors/hand-alt-press.svg') 30 6, pointer !important;
+  cursor: var(--cur-hand-alt-press) 30 6, pointer !important;
 }
 
 body {
@@ -51,7 +69,7 @@ body {
   position: relative;
   margin: 50px 50px 0;
   height: 829px;
-  background: #0000ff;
+  background: var(--accent);
 }
 
 .hero-gliders {
@@ -81,7 +99,7 @@ body {
 }
 
 .chars-sample {
-  color: #0000ff;
+  color: var(--accent);
   font-size: 72px;
   font-weight: 500;
   line-height: 88px;
@@ -102,7 +120,7 @@ body {
   width: 815px;
   height: 617px;
   padding: 51px 61px;
-  color: #0000ff;
+  color: var(--accent);
   font-size: 72px;
   font-weight: 500;
   line-height: 88px;
@@ -116,7 +134,7 @@ body {
   flex-shrink: 0;
   width: 569px;
   height: 617px;
-  background: #0000ff;
+  background: var(--accent);
   padding: 40px 37px;
   color: #fff;
   font-size: 72px;
@@ -126,7 +144,7 @@ body {
 }
 
 [contenteditable] {
-  cursor: url('/cursors/ibeam.svg') 21 48, text;
+  cursor: var(--cur-ibeam) 21 48, text;
   outline: none;
   caret-color: currentColor;
 }
@@ -150,7 +168,7 @@ body {
 .specimen-meta {
   display: flex;
   justify-content: space-between;
-  color: rgba(0, 0, 255, 0.2);
+  color: color-mix(in srgb, var(--accent) 20%, transparent);
   font-size: 24px;
   font-weight: 500;
   line-height: 30px;
@@ -172,16 +190,16 @@ body {
 
 .stepper:hover,
 .stepper:focus-within {
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .stepper button:disabled {
   opacity: 0.2;
-  cursor: url('/cursors/hand.svg') 30 6, auto;
+  cursor: var(--cur-hand) 30 6, auto;
 }
 
 .specimen-text {
-  color: #0000ff;
+  color: var(--accent);
   font-weight: 500;
   width: 1416px;
 }
@@ -210,7 +228,7 @@ body {
   min-height: 100vh;
   min-height: 100svh;
   padding: 50px;
-  background: #0000ff;
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,13 +252,13 @@ body {
 
 .cta-btn:hover {
   background-size: 100% 100%;
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .cta-primary {
   background-color: #fff;
-  background-image: linear-gradient(#0000ff, #0000ff);
-  color: #0000ff;
+  background-image: linear-gradient(var(--accent), var(--accent));
+  color: var(--accent);
 }
 
 .cta-primary:hover {
@@ -250,7 +268,7 @@ body {
 /* ── Selection ── */
 
 ::selection {
-  background: #0000ff;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -259,7 +277,7 @@ body {
 .desc-right::selection,
 .cta ::selection {
   background: #fff;
-  color: #0000ff;
+  color: var(--accent);
 }
 
 /* ── Type-in pixelate ── */
@@ -300,7 +318,7 @@ body {
 
 .wpm-flow {
   position: relative;
-  color: rgba(0, 0, 255, 0.3);
+  color: color-mix(in srgb, var(--accent) 30%, transparent);
   font-size: 64px;
   line-height: 96px;
   word-spacing: 0.3em;
@@ -317,6 +335,39 @@ body {
 
 .wpm-box.is-classic.is-running .wpm-lines {
   display: block;
+}
+
+/* ── Accent swap ── */
+
+.accent {
+  position: fixed;
+  top: 9px;
+  right: 50px;
+  z-index: 100;
+  display: flex;
+  background: #fff;
+}
+
+.accent-btn {
+  width: 36px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 0;
+}
+
+.accent-btn::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 6px var(--swatch);
+}
+
+.accent-btn[aria-pressed="true"]::before,
+.accent-btn:hover::before {
+  box-shadow: none;
 }
 
 /* ── Sound ── */
@@ -337,7 +388,7 @@ body {
   display: none;
   height: 32px;
   align-items: center;
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .sound-credit {
@@ -360,7 +411,7 @@ body {
   display: grid;
   place-items: center;
   background: #fff;
-  color: #0000ff;
+  color: var(--accent);
   border: 0;
 }
 
@@ -370,7 +421,7 @@ body {
 }
 
 .sound-btn:hover {
-  background: #0000ff;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -384,12 +435,12 @@ body {
 
 .sound-volume::-webkit-slider-runnable-track {
   height: 2px;
-  background: #0000ff;
+  background: var(--accent);
 }
 
 .sound-volume::-moz-range-track {
   height: 2px;
-  background: #0000ff;
+  background: var(--accent);
 }
 
 .sound-volume::-webkit-slider-thumb {
@@ -397,7 +448,7 @@ body {
   width: 8px;
   height: 14px;
   margin-top: -6px;
-  background: #0000ff;
+  background: var(--accent);
   border: 0;
   border-radius: 0;
 }
@@ -405,7 +456,7 @@ body {
 .sound-volume::-moz-range-thumb {
   width: 8px;
   height: 14px;
-  background: #0000ff;
+  background: var(--accent);
   border: 0;
   border-radius: 0;
 }
@@ -436,7 +487,7 @@ body {
 .wpm .specimen-meta {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .wpm-timer {
@@ -445,7 +496,7 @@ body {
 
 .wpm-durations button:hover,
 .wpm-durations button.is-active {
-  background: #0000ff;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -455,7 +506,7 @@ body {
 }
 
 .wpm-box.is-running {
-  cursor: url('/cursors/ibeam.svg') 21 48, text;
+  cursor: var(--cur-ibeam) 21 48, text;
 }
 
 .wpm-input {
@@ -484,21 +535,21 @@ body {
   text-align: center;
   word-spacing: 0.2em;
   white-space: nowrap;
-  color: rgba(0, 0, 255, 0.3);
+  color: color-mix(in srgb, var(--accent) 30%, transparent);
   font-size: 48px;
   line-height: 58px;
 }
 
 .wpm-next .now {
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .wpm-next .done {
-  color: rgba(0, 0, 255, 0.1);
+  color: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .wpm-text {
-  color: rgba(0, 0, 255, 0.3);
+  color: color-mix(in srgb, var(--accent) 30%, transparent);
   font-size: 128px;
   line-height: 154px;
   white-space: pre;
@@ -506,7 +557,7 @@ body {
 
 :is(.wpm-text, .wpm-flow) .ok,
 .wpm-text .cue {
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .wpm-start {
@@ -518,8 +569,8 @@ body {
   z-index: 1;
   padding: 40px 96px;
   border: 0;
-  outline: 6px solid #0000ff;
-  background-color: #0000ff;
+  outline: 6px solid var(--accent);
+  background-color: var(--accent);
   background-image: linear-gradient(#fff, #fff);
   background-repeat: no-repeat;
   background-size: 0% 100%;
@@ -533,7 +584,7 @@ body {
 
 .wpm-start:hover {
   background-size: 100% 100%;
-  color: #0000ff;
+  color: var(--accent);
 }
 
 .wpm-box.is-idle .wpm-start {
@@ -544,7 +595,7 @@ body {
   visibility: hidden;
   margin-top: 24px;
   text-align: center;
-  color: #0000ff;
+  color: var(--accent);
   font-size: 24px;
   line-height: 30px;
 }
@@ -557,7 +608,7 @@ body {
   display: inline-block;
   padding: 4px 24px;
   margin-right: 8px;
-  background: #0000ff;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -566,7 +617,7 @@ body {
 }
 
 :is(.wpm-text, .wpm-flow) .bad {
-  background: #0000ff;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -586,7 +637,7 @@ body {
   top: 0;
   bottom: 0;
   width: 8px;
-  background: #0000ff;
+  background: var(--accent);
   animation: caret-blink 1s steps(1, end) infinite;
 }
 
@@ -606,7 +657,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #0000ff;
+  background: var(--accent);
   color: #fff;
   font-size: 48px;
   line-height: 58px;

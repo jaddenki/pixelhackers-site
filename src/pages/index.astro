@@ -9,6 +9,9 @@ import '../styles/main.css';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <title>PixelHackers</title>
+    <script is:inline>
+      try { if (localStorage.getItem('ph-accent') === 'pink') document.documentElement.dataset.accent = 'pink'; } catch {}
+    </script>
   </head>
   <body>
     <div class="page">
@@ -101,6 +104,7 @@ import '../styles/main.css';
 
     <script>
       import { initSound }            from '../lib/sound';
+      import { initAccent }           from '../lib/accent';
       import { initCursorPress }      from '../lib/cursor-press';
       import { initHeroType }         from '../lib/hero-type';
       import { initHeroGliders }      from '../lib/hero-gliders';
@@ -111,6 +115,7 @@ import '../styles/main.css';
       const hero = document.querySelector<HTMLElement>('.hero')!;
 
       initSound();
+      initAccent();
       initCursorPress();
       initHeroType(hero);
       initHeroGliders(hero, hero.querySelector<HTMLCanvasElement>('.hero-gliders')!);
