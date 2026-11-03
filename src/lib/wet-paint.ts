@@ -47,15 +47,23 @@ export function initWetPaint(box: HTMLElement) {
   let ticking = false;
   let queued = false;
 
+  let sized = false;
   const fit = () => {
+    if (!cells.size) {
+      if (canvas.width) canvas.width = canvas.height = 0;
+      sized = false;
+      return;
+    }
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(innerWidth * dpr);
     canvas.height = Math.round(innerHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sized = true;
     draw();
   };
 
   const draw = () => {
+    if (!sized) { if (cells.size) fit(); return; }
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     if (!cells.size) return;
     const accent = getComputedStyle(canvas).color;
@@ -76,7 +84,7 @@ export function initWetPaint(box: HTMLElement) {
     for (const [key, c] of cells) if (c.dies <= now) cells.delete(key);
     draw();
     if (cells.size) setTimeout(tick, 1000 / FPS);
-    else ticking = false;
+    else { ticking = false; fit(); }
   };
 
   const wake = () => {

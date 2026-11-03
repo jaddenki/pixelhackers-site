@@ -71,6 +71,7 @@ body {
 
 .hero {
   position: relative;
+  overflow: clip;
   margin: var(--gutter) var(--gutter) 0;
   height: calc(829 * var(--u));
   background: var(--accent);
@@ -78,9 +79,9 @@ body {
 
 .hero-gliders {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  image-rendering: pixelated;
 }
 
 .hero-text {
@@ -494,6 +495,7 @@ body {
 
 .globe-map {
   display: block;
+  image-rendering: pixelated;
   touch-action: pan-y;
 }
 

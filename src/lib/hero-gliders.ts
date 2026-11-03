@@ -16,12 +16,13 @@ export function initHeroGliders(hero: HTMLElement, canvas: HTMLCanvasElement) {
   const resize = () => {
     w = hero.clientWidth;
     h = hero.clientHeight;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.ceil(w / CELL) + PAD * 2;
-    rows = Math.ceil(h / CELL) + PAD * 2;
+    const vc = Math.ceil(w / CELL), vr = Math.ceil(h / CELL);
+    canvas.width = vc;
+    canvas.height = vr;
+    canvas.style.width = `${vc * CELL}px`;
+    canvas.style.height = `${vr * CELL}px`;
+    cols = vc + PAD * 2;
+    rows = vr + PAD * 2;
     grid = new Uint8Array(cols * rows);
   };
 
@@ -44,14 +45,14 @@ export function initHeroGliders(hero: HTMLElement, canvas: HTMLCanvasElement) {
   };
 
   const draw = () => {
-    ctx.clearRect(0, 0, w, h);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#fff';
     let visible = 0;
     for (let y = PAD; y < rows - PAD; y++) {
       for (let x = PAD; x < cols - PAD; x++) {
         if (!grid[y * cols + x]) continue;
         visible++;
-        ctx.fillRect((x - PAD) * CELL, (y - PAD) * CELL, CELL, CELL);
+        ctx.fillRect(x - PAD, y - PAD, 1, 1);
       }
     }
     return visible;

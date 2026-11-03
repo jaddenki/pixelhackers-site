@@ -126,36 +126,40 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
   const sin = Math.sin(TILT);
   const ctx = canvas.getContext('2d')!;
   const fctx = fx.getContext('2d')!;
-  const small = document.createElement('canvas');
-  const sctx = small.getContext('2d')!;
+  let accent = getComputedStyle(canvas).color;
   const host = canvas.closest<HTMLElement>('.globe')!;
 
   let CELLS = 0;
   let size = 0;
   let r = 0;
   let fxSize = 0;
-  let image = sctx.createImageData(1, 1);
+  let image = ctx.createImageData(1, 1);
+  let dpr = 1;
+
+  let fxRunning = false;
+  const allocFx = () => {
+    fx.width = fx.height = Math.round(fxSize * dpr);
+    fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  const freeFx = () => { fx.width = fx.height = 0; };
 
   const layout = () => {
     const fit = Math.floor(Math.min(MAX_CELLS * CELL, host.clientWidth) / CELL);
     const cells = fit % 2 ? fit : fit - 1;
     if (cells === CELLS) return false;
-    const dpr = window.devicePixelRatio || 1;
+    dpr = window.devicePixelRatio || 1;
     CELLS = cells;
     size = CELLS * CELL;
     r = CELLS / 2;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
+    canvas.width = canvas.height = CELLS;
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
     fxSize = size + FX_PAD * 2;
-    fx.width = fxSize * dpr;
-    fx.height = fxSize * dpr;
     fx.style.width = `${fxSize}px`;
     fx.style.height = `${fxSize}px`;
-    fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    small.width = small.height = CELLS;
-    image = sctx.createImageData(CELLS, CELLS);
+    if (fxRunning) allocFx();
+    else freeFx();
+    image = ctx.createImageData(CELLS, CELLS);
     return true;
   };
   layout();
@@ -175,7 +179,7 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
   };
 
   const draw = () => {
-    const [ar, ag, ab] = rgb(getComputedStyle(canvas).color);
+    const [ar, ag, ab] = rgb(accent);
     const data = image.data;
     for (let j = 0; j < CELLS; j++) {
       for (let i = 0; i < CELLS; i++) {
@@ -192,11 +196,7 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
         data[o + 3] = 255;
       }
     }
-    sctx.putImageData(image, 0, 0);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(small, 0, 0, canvas.width, canvas.height);
+    ctx.putImageData(image, 0, 0);
   };
 
   let particles: Particle[] = [];
@@ -215,7 +215,6 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
 
   const drawFx = () => {
     fctx.clearRect(0, 0, fxSize, fxSize);
-    const accent = getComputedStyle(canvas).color;
     const dot = (x: number, y: number, s: number) => {
       fctx.fillStyle = insideGlobe(x, y) ? '#fff' : accent;
       fctx.fillRect(snap(x), snap(y), s, s);
@@ -254,7 +253,6 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
     }
   };
 
-  let fxRunning = false;
   let fxLast = 0;
   const fxLoop = (now: number) => {
     if (now - fxLast >= 50) {
@@ -279,11 +277,11 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
       drawFx();
     }
     if (particles.length || rings.length || charge || missiles.length || hearts.length) requestAnimationFrame(fxLoop);
-    else { fxRunning = false; fctx.clearRect(0, 0, fxSize, fxSize); }
+    else { fxRunning = false; freeFx(); }
   };
 
   const startFx = () => {
-    if (!fxRunning) { fxRunning = true; fxLast = 0; requestAnimationFrame(fxLoop); }
+    if (!fxRunning) { fxRunning = true; fxLast = 0; allocFx(); requestAnimationFrame(fxLoop); }
   };
 
   const explode = (px: number, py: number, pw: number) => {
@@ -511,5 +509,5 @@ export function initGlobe(canvas: HTMLCanvasElement, fx: HTMLCanvasElement, quip
 
   new ResizeObserver(() => { if (layout()) draw(); }).observe(host);
 
-  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-accent'] });
+  new MutationObserver(() => { accent = getComputedStyle(canvas).color; draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-accent'] });
 }
