@@ -31,7 +31,7 @@ export function initSpecimenControls() {
       const { min, max, step } = LIMITS[prop];
       const label = stepper.querySelector<HTMLElement>('.stepper-val')!;
       const [dec, inc] = stepper.querySelectorAll<HTMLButtonElement>('button');
-      let value = Number(stepper.dataset.value);
+      let value = prop === 'size' ? Math.round(parseFloat(getComputedStyle(text).fontSize)) : Number(stepper.dataset.value);
 
       const set = (next: number, initial = false) => {
         value = Math.min(max, Math.max(min, next));

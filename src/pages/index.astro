@@ -26,13 +26,14 @@ import '../styles/main.css';
 
       <!-- Character specimen -->
       <div class="chars">
-        <div class="chars-sample">AaBbCc<br>123#&amp;?<br>()[]{}</div>
+        <div class="chars-sample">AaBbCc<br>123#&amp;?<br>()[]&#123;&#125;</div>
+        <canvas class="chars-canvas" aria-hidden="true"></canvas>
       </div>
 
       <!-- Description boxes -->
       <div class="description">
-        <div class="desc-left" contenteditable="plaintext-only" spellcheck="false">Kern lead trace loop drop fill bold flat edge wide snap grid type draw curve hold back clean push render sharp.</div>
-        <div class="desc-right">PixelHackers is a sans-serif pixel typeface with details idk what to say now.</div>
+        <div class="desc-left" contenteditable="plaintext-only" spellcheck="false">Kern lead trace loop drop fill bold flat edge wide snap grid type draw curve hold back clean push render sharp pixel byte glyph.</div>
+        <div class="desc-right">PixelHackers is a pixel typeface for people who touch wet paint to see if it’s wet.</div>
       </div>
 
       <!-- Type specimens (editable) -->
@@ -40,31 +41,15 @@ import '../styles/main.css';
         <div class="specimen">
           <div class="specimen-meta">
             <span>PixelHackers</span>
-            <span class="stepper" data-prop="size" data-value="128"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">128pt</span><button type="button" aria-label="Increase">+</button></span>
+            <span class="stepper" data-prop="size" data-value="144"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">144pt</span><button type="button" aria-label="Increase">+</button></span>
             <span class="stepper" data-prop="tracking" data-value="-2"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">-2% Tracking</span><button type="button" aria-label="Increase">+</button></span>
           </div>
-          <div class="specimen-text s128" contenteditable="plaintext-only" spellcheck="false">This is some large text</div>
-        </div>
-
-        <div class="specimen">
-          <div class="specimen-meta">
-            <span>PixelHackers</span>
-            <span class="stepper" data-prop="size" data-value="64"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">64pt</span><button type="button" aria-label="Increase">+</button></span>
-            <span class="stepper" data-prop="tracking" data-value="-2"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">-2% Tracking</span><button type="button" aria-label="Increase">+</button></span>
-          </div>
-          <div class="specimen-text s64" contenteditable="plaintext-only" spellcheck="false">This is half the size of the other text</div>
-        </div>
-
-        <div class="specimen">
-          <div class="specimen-meta">
-            <span>PixelHackers</span>
-            <span class="stepper" data-prop="size" data-value="24"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">24pt</span><button type="button" aria-label="Increase">+</button></span>
-            <span class="stepper" data-prop="tracking" data-value="0"><button type="button" aria-label="Decrease">-</button><span class="stepper-val">0% Tracking</span><button type="button" aria-label="Increase">+</button></span>
-          </div>
-          <div class="specimen-text s24" contenteditable="plaintext-only" spellcheck="false">PixelHackers is a blank pixel font that blank lorem ipsum and I dont really know what else to write in this description</div>
+          <div class="specimen-text s144" contenteditable="plaintext-only" spellcheck="false">I’m going to
+change the world</div>
         </div>
       </div>
 
+      <div class="globe"><div class="globe-stage"><canvas class="globe-map" aria-label="Spinning globe. Drag to spin, click to make a crater."></canvas><canvas class="globe-fx" aria-hidden="true"></canvas><div class="globe-quip" role="status" aria-live="polite"></div></div></div>
 
       <div class="wpm">
         <div class="specimen-meta">
@@ -111,6 +96,10 @@ import '../styles/main.css';
       import { initSpecimenControls } from '../lib/specimen-controls';
       import { initTypePixelate }     from '../lib/type-pixelate';
       import { initTypingTest }       from '../lib/typing-test';
+      import { initGlobe }            from '../lib/globe';
+      import { initRetype }           from '../lib/retype';
+      import { initCharsFall }        from '../lib/chars-fall';
+      import { initBinary }           from '../lib/binary';
 
       const hero = document.querySelector<HTMLElement>('.hero')!;
 
@@ -122,6 +111,14 @@ import '../styles/main.css';
       initSpecimenControls();
       initTypePixelate();
       initTypingTest(document.querySelector<HTMLElement>('.wpm')!);
+      initRetype(document.querySelector<HTMLElement>('.specimen-text')!);
+      initCharsFall(document.querySelector<HTMLElement>('.chars')!);
+      initBinary();
+      initGlobe(
+        document.querySelector<HTMLCanvasElement>('.globe-map')!,
+        document.querySelector<HTMLCanvasElement>('.globe-fx')!,
+        document.querySelector<HTMLElement>('.globe-quip')!,
+      );
     </script>
   </body>
 </html>

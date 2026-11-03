@@ -8,6 +8,9 @@ const FILES = {
   birds: '/audio/birds.mp3',
   music: '/audio/cher.mp3',
   testMusic: '/audio/lingon.mp3',
+  globeMusic: '/audio/allen.mp3',
+  token: '/audio/token.mp3',
+  talk: '/audio/talk.mp3',
   ready: '/audio/ready.mp3',
   credits: '/audio/goodending.mp3',
   bbbLegendary: '/audio/bbb-legendary.mp3',
@@ -19,7 +22,7 @@ const FILES = {
 let onTrackChange: (() => void) | null = null;
 
 const CHEERS: Name[] = ['bbbLegendary', 'bbbDominating', 'rLegendary', 'rDominating'];
-type Track = 'music' | 'testMusic' | 'credits';
+type Track = 'music' | 'testMusic' | 'globeMusic' | 'credits';
 type Name = keyof typeof FILES;
 
 type Prefs = { enabled: boolean; music: boolean; volume: number };
@@ -103,7 +106,17 @@ async function syncMusic() {
   if (musicGain && ctx) musicGain.gain.setValueAtTime(musicLevel(), ctx.currentTime);
 }
 
+export const getTrack = () => track;
+
+let mainTrack: Track = 'music';
+
+export function setMainTrack(next: Track) {
+  mainTrack = next;
+  setTrack('music');
+}
+
 export function setTrack(next: Track) {
+  if (next === 'music') next = mainTrack;
   if (track === next) return;
   track = next;
   onTrackChange?.();
@@ -127,7 +140,9 @@ const pitch = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
 export const sfx = {
   key: () => play('key', { volume: 0.5, rate: pitch(0.75, 1.35) }),
   click: () => play('key', { volume: 0.7, rate: pitch(0.85, 1.2) }),
-  boom: () => play('boom', { volume: 0.8, rate: pitch(0.9, 1.1) }),
+  talk: () => play('talk', { volume: 0.6, rate: pitch(0.95, 1.1) }),
+  heart: () => play('token', { volume: 0.7, rate: pitch(0.9, 1.15) }),
+  boom: (power = 0) => play('boom', { volume: 0.7 + 0.3 * power, rate: pitch(0.9, 1.1) * (1 - 0.45 * power) }),
   birds: () => play('birds', { volume: 0.6 }),
   ready: () => play('ready', { volume: 0.9 }),
   cheer: () => play(CHEERS[Math.floor(Math.random() * CHEERS.length)], { volume: 0.9 }),
