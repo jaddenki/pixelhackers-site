@@ -1,5 +1,6 @@
 import { sfx } from './sound';
 import { wetTouched } from './wet-paint';
+import { finePrint } from './fine-print';
 
 const LINE = 30;
 const FEED_MS = 55;
@@ -95,6 +96,7 @@ export function initReceipt(button: HTMLAnchorElement, github: HTMLAnchorElement
       ${row('Wet paint touched', wetTouched() ? 'Yes' : 'No')}
       ${row('Your WPM', wpm === null ? 'Untested' : String(wpm))}
       ${row('The world', world ?? 'Unchanged')}
+      ${row('Fine print', finePrint())}
       ${rule}
       ${row('Total', 'Free')}
       <a class="receipt-code" href="${github.href}" aria-label="GitHub">${barcode(order + date + time)}</a>

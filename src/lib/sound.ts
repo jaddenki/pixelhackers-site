@@ -140,6 +140,7 @@ const pitch = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
 export const sfx = {
   key: () => play('key', { volume: 0.5, rate: pitch(0.75, 1.35) }),
   click: () => play('key', { volume: 0.7, rate: pitch(0.85, 1.2) }),
+  crackle: () => play('key', { volume: 0.35, rate: pitch(0.4, 0.7) }),
   talk: () => play('talk', { volume: 0.6, rate: pitch(0.95, 1.1) }),
   heart: () => play('token', { volume: 0.7, rate: pitch(0.9, 1.15) }),
   boom: (power = 0) => play('boom', { volume: 0.7 + 0.3 * power, rate: pitch(0.9, 1.1) * (1 - 0.45 * power) }),

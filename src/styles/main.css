@@ -239,8 +239,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 37px;
+  gap: min(80px, 4vw);
 }
 
 .cta-btn {
@@ -263,6 +262,13 @@ body {
 .cta-btn:hover {
   background-size: 100% 100%;
   color: var(--accent);
+}
+
+.cta .cta-btn {
+  padding: 0.4em 1em;
+  outline-width: 0.1em;
+  font-size: min(120px, 5.5vw);
+  line-height: 1.2;
 }
 
 .cta-primary {
@@ -779,6 +785,57 @@ body {
 
 
 
+/* ── Fine print ── */
+
+.fine {
+  margin-top: calc(242 * var(--u));
+  padding: max(64px, calc(140 * var(--u))) 0;
+  background: var(--accent);
+  color: var(--accent);
+  overflow: clip;
+}
+
+.fine-desk {
+  position: relative;
+  isolation: isolate;
+}
+
+.fine-sheet {
+  position: absolute;
+  display: block;
+  background: #fff;
+  outline: 6px solid var(--accent);
+  touch-action: none;
+}
+
+.fine-lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.fine-sheet,
+.fine-desk.is-lens {
+  cursor: var(--cur-hand-alt) 30 6, grab;
+}
+
+html.is-pressing .fine-sheet,
+html.is-pressing .fine-desk.is-holding,
+html.is-pressing .fine-desk.is-holding * {
+  cursor: var(--cur-hand-alt-press) 30 6, grabbing !important;
+}
+
+.fine-copy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ── Wet paint ── */
 
 .paint {
@@ -1075,6 +1132,11 @@ html.is-pressing .receipt * {
     grid-template-columns: 1fr auto;
   }
 
+  .fine {
+    margin-top: 160px;
+    padding: 40px 0;
+  }
+
   .wpm-options {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -1124,10 +1186,11 @@ html.is-pressing .receipt * {
     padding: 16px;
   }
 
-  .cta-btn {
-    padding: 16px 40px;
-    font-size: 40px;
-    line-height: 48px;
+  .cta .cta-btn {
+    padding: 28px 56px;
+    outline-width: 8px;
+    font-size: 72px;
+    line-height: 86px;
   }
 
   .sound {
