@@ -202,6 +202,7 @@ export function initTypingTest(root: HTMLElement) {
     sfx.cheer();
     setTrack('music');
     timer.textContent = '0s';
+    document.dispatchEvent(new CustomEvent('wpm:done', { detail: wpm }));
   };
 
   const tick = () => {

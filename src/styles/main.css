@@ -779,6 +779,115 @@ body {
 
 
 
+/* ── Wet paint ── */
+
+.paint {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  width: 100vw;
+  height: 100vh;
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.desc-right {
+  position: relative;
+}
+
+.wet-sign {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  padding: 6px 12px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 24px;
+  line-height: 30px;
+  white-space: nowrap;
+}
+
+/* ── Receipt ── */
+
+.receipt {
+  --tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 4 2' shape-rendering='crispEdges'%3E%3Cpath fill='%23fff' d='M1 0h2v1H1zM0 1h4v1H0z'/%3E%3C/svg%3E");
+  position: fixed;
+  bottom: 0;
+  z-index: 150;
+  width: 432px;
+  max-width: calc(100vw - 36px);
+  padding: 36px 36px 42px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 24px;
+  line-height: 30px;
+  filter: drop-shadow(6px 0 0 var(--accent)) drop-shadow(-6px 0 0 var(--accent)) drop-shadow(0 -6px 0 var(--accent));
+  cursor: var(--cur-hand-alt) 30 6, pointer;
+}
+
+.receipt::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: var(--tooth) repeat-x;
+}
+
+.receipt-head {
+  margin-bottom: 6px;
+  font-size: 48px;
+  line-height: 60px;
+  text-align: center;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  white-space: nowrap;
+}
+
+.receipt-rule {
+  height: 6px;
+  margin: 12px 0;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 12px);
+}
+
+.receipt-code {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 12px;
+  color: var(--accent);
+}
+
+.receipt-thanks {
+  text-align: center;
+}
+
+.receipt-tear {
+  display: block;
+  margin: 12px auto 0;
+  padding: 0 12px;
+  background: none;
+  border: 0;
+  color: color-mix(in srgb, var(--accent) 30%, transparent);
+  font: inherit;
+}
+
+.receipt-tear:hover,
+.receipt-tear:focus-visible {
+  background: var(--accent);
+  color: #fff;
+  outline: none;
+}
+
+html.is-pressing .receipt,
+html.is-pressing .receipt * {
+  cursor: var(--cur-hand-alt-press) 30 6, pointer !important;
+}
+
 /* ── Credits ── */
 
 .credits {
@@ -888,6 +997,31 @@ body {
 
   .desc-left {
     padding: 0 0 24px;
+  }
+
+  .desc-right.has-sign {
+    padding-bottom: 78px;
+  }
+
+  .wet-sign {
+    right: 12px;
+    bottom: 12px;
+    font-size: 20px;
+  }
+
+  .receipt {
+    padding: 24px 24px 30px;
+    font-size: 20px;
+  }
+
+  .receipt-head {
+    font-size: 40px;
+    line-height: 48px;
+  }
+
+  .receipt-code svg {
+    width: 100%;
+    height: 48px;
   }
 
   .specimens {

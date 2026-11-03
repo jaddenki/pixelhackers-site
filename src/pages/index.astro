@@ -1,5 +1,8 @@
 ---
+import { statSync } from 'node:fs';
 import '../styles/main.css';
+
+const fontBytes = statSync('public/fonts/PixelHackers.woff2').size;
 ---
 
 <html lang="en">
@@ -83,8 +86,8 @@ change the world</div>
     </div>
 
     <div class="cta">
-      <a class="cta-btn cta-primary" href="/fonts/PixelHackers.woff2" download>Download</a>
-      <a class="cta-btn" href="#">GitHub</a>
+      <a class="cta-btn cta-primary" href="/fonts/PixelHackers.woff2" download data-bytes={fontBytes}>Download</a>
+      <a class="cta-btn cta-github" href="#">GitHub</a>
     </div>
 
     <script>
@@ -100,6 +103,8 @@ change the world</div>
       import { initRetype }           from '../lib/retype';
       import { initCharsFall }        from '../lib/chars-fall';
       import { initBinary }           from '../lib/binary';
+      import { initWetPaint }         from '../lib/wet-paint';
+      import { initReceipt }          from '../lib/receipt';
 
       const hero = document.querySelector<HTMLElement>('.hero')!;
 
@@ -114,6 +119,11 @@ change the world</div>
       initRetype(document.querySelector<HTMLElement>('.specimen-text')!);
       initCharsFall(document.querySelector<HTMLElement>('.chars')!);
       initBinary();
+      initWetPaint(document.querySelector<HTMLElement>('.desc-right')!);
+      initReceipt(
+        document.querySelector<HTMLAnchorElement>('.cta-primary')!,
+        document.querySelector<HTMLAnchorElement>('.cta-github')!,
+      );
       initGlobe(
         document.querySelector<HTMLCanvasElement>('.globe-map')!,
         document.querySelector<HTMLCanvasElement>('.globe-fx')!,
