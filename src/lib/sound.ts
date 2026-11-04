@@ -28,7 +28,7 @@ type Name = keyof typeof FILES;
 
 type Prefs = { enabled: boolean; music: boolean; volume: number };
 
-let prefs: Prefs = { enabled: false, music: true, volume: 0.35 };
+let prefs: Prefs = { enabled: true, music: true, volume: 0.35 };
 try {
   prefs = { ...prefs, ...JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') };
 } catch {}
